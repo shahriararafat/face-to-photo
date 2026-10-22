@@ -1,0 +1,21 @@
+services:
+  facescan:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      GOOGLE_DRIVE_API_KEY: ${GOOGLE_DRIVE_API_KEY:-}
+      FACE_ENGINE: ${FACE_ENGINE:-auto}
+      MAX_IMAGE_EDGE: ${MAX_IMAGE_EDGE:-1600}
+      INDEX_CONCURRENCY: ${INDEX_CONCURRENCY:-3}
+      MAX_PHOTOS: ${MAX_PHOTOS:-10000}
+    volumes:
+      - ./data:/app/data
+      - ./models:/app/models
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/health')"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 180s
