@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0b0b0b">
+  <meta name="description" content="Find every photo of one person in a public Google Drive folder.">
+  <meta name="robots" content="noindex">
+  <title>FaceScan Pro</title>
+  <link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/static/css/app.css?v=2">
+</head>
+<body>
+  <div class="app">
+    <header class="top">
+      <a class="brand" href="/">
+        <svg class="mark" viewBox="0 0 32 32" aria-hidden="true">
+          <rect x="1" y="1" width="30" height="30" rx="8" fill="#161616" stroke="rgba(246,243,238,.16)"/>
+          <path d="M8 12V9.5A1.5 1.5 0 0 1 9.5 8H12" fill="none" stroke="#3ee08f" stroke-width="1.8" stroke-linecap="round"/>
+          <path d="M20 8h2.5A1.5 1.5 0 0 1 24 9.5V12" fill="none" stroke="#3ee08f" stroke-width="1.8" stroke-linecap="round"/>
+          <path d="M24 20v2.5a1.5 1.5 0 0 1-1.5 1.5H20" fill="none" stroke="#3ee08f" stroke-width="1.8" stroke-linecap="round"/>
+          <path d="M12 24H9.5A1.5 1.5 0 0 1 8 22.5V20" fill="none" stroke="#3ee08f" stroke-width="1.8" stroke-linecap="round"/>
+          <circle cx="16" cy="16" r="3.2" fill="none" stroke="#f6f3ee" stroke-width="1.6"/>
+        </svg>
+        <span class="brand-text">
+          <strong>FaceScan Pro</strong>
+          <small>Find a person in a photo folder</small>
+        </span>
+      </a>
+      <p id="enginePill" class="pill">Starting…</p>
+    </header>
+
+    <main class="workspace">
+      <section class="panel" aria-label="Search setup">
+        <ol class="steps">
+          <li>
+            <div class="kicker"><span>1</span> Folder</div>
+            <form id="folderForm">
+              <label class="sr" for="folderUrl">Public Google Drive folder link</label>
+              <input id="folderUrl" name="url" type="url" inputmode="url" autocomplete="off" spellcheck="false" placeholder="https://drive.google.com/drive/folders/…" required>
+              <button id="folderBtn" class="btn" type="submit">Index folder</button>
+            </form>
+            <div class="folder-head">
+              <p id="folderName" class="folder-name" hidden></p>
+              <a id="folderOpen" class="quiet" href="https://drive.google.com" target="_blank" rel="noopener noreferrer" hidden>Open folder</a>
+            </div>
+            <p id="folderDetail" class="status" aria-live="polite"></p>
+            <div id="folderBar" class="bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" hidden>
+              <span></span>
+            </div>
+            <p id="folderNote" class="note" hidden></p>
+            <div id="folderList" class="chips" hidden></div>
+          </li>
+          <li>
+            <div class="kicker"><span>2</span> Person</div>
+            <div id="drop" class="drop" tabindex="0">
+              <input id="file" type="file" accept="image/*" hidden>
+              <p id="dropText">Drop a clear photo of one person</p>
+              <button id="browse" class="quiet" type="button">Browse photos</button>
+            </div>
+            <p id="facePick" class="kicker sub" hidden>Face found</p>
+            <div id="faceRow" class="faces" hidden></div>
+          </li>
+          <li>
+            <div class="kicker"><span>3</span> Match level</div>
+            <label class="slider-label" for="threshold">
+              Show matches above <strong id="thresholdLabel">50%</strong>
+            </label>
+            <input id="threshold" type="range" min="0.35" max="0.75" step="0.01" value="0.5" aria-valuemin="35" aria-valuemax="75">
+            <p class="hint">Lower this if a real match is missing. Raise it if strangers slip in.</p>
+          </li>
+        </ol>
+        <p id="engineWarn" class="warn" hidden></p>
+        <button id="removeFolder" class="text-btn" type="button" hidden>Remove this index</button>
+      </section>
+
+      <section class="stage" id="stage" aria-live="polite">
+        <div id="welcome">
+          <p class="eyebrow">For event folders, family albums, conference dumps</p>
+          <h1>Find one face in thousands of photos.</h1>
+          <p id="welcomeText">Paste a public Google Drive folder, add one photo of a person, and download every match.</p>
+          <ol class="welcome-steps">
+            <li>Share the Drive folder as anyone with the link.</li>
+            <li>Index it once. The next search is instant.</li>
+            <li>Boxes show the matched face so you can check before downloading.</li>
+          </ol>
+        </div>
+        <div id="toolbar" class="toolbar" hidden>
+          <div class="who">
+            <img id="refMini" alt="" width="44" height="44">
+            <div>
+              <p id="resultCount">No photos yet</p>
+              <p id="resultHint" class="hint"></p>
+            </div>
+          </div>
+          <button id="downloadBtn" class="btn" type="button" disabled>Download photos</button>
+        </div>
+        <div id="empty" class="empty" hidden></div>
+        <div id="grid" class="grid" hidden></div>
+      </section>
+    </main>
+
+    <footer class="foot">
+      <span id="engineFoot">CPU face search</span>
+      <span>Processed on this server. No third-party AI API.</span>
+    </footer>
+  </div>
+
+  <div id="lightbox" class="lightbox" hidden>
+    <div class="lightbox-backdrop" data-close="true"></div>
+    <div class="lightbox-panel" role="dialog" aria-modal="true" aria-labelledby="lbCap">
+      <button id="lbClose" class="icon-btn" type="button" aria-label="Close">
+        <span aria-hidden="true">×</span>
+      </button>
+      <button id="lbPrev" class="nav prev" type="button" aria-label="Previous photo">‹</button>
+      <button id="lbNext" class="nav next" type="button" aria-label="Next photo">›</button>
+      <div class="compare">
+        <figure>
+          <figcaption>Reference</figcaption>
+          <img id="lbRef" alt="Reference face">
+        </figure>
+        <figure>
+          <figcaption id="lbCap">Matched photo</figcaption>
+          <div class="shot plain" id="lbShot">
+            <img id="lbImg" alt="">
+            <span id="lbBox" class="box"></span>
+          </div>
+        </figure>
+      </div>
+      <div class="lb-bar">
+        <a id="lbOpen" target="_blank" rel="noopener noreferrer">Open in Drive</a>
+        <span id="lbCount"></span>
+      </div>
+    </div>
+  </div>
+  <div id="toast" class="toast" role="status" hidden></div>
+  <script src="/static/js/app.js?v=2"></script>
+  <noscript>FaceScan Pro needs JavaScript to search photos.</noscript>
+</body>
+</html>
